@@ -120,7 +120,8 @@ class InstagramCrawler(object):
         return self
 
     def crawl(self,number=None,caption=False):
-        self.number = self._set_post_num(number)
+        self.number = self._set_num(number)
+        print self.number
 
         if self.crawl_type == "photos":
             self.photo_links = self._crawl_photo_links()
@@ -171,19 +172,25 @@ class InstagramCrawler(object):
 
         return self
 
-    def _set_post_num(self, number_to_download):
+    def _set_num(self, number_to_download):
 
-        post_num_info = re.search(r'\"media":{"count":\d+', self.driver.page_source).group()
-        post_num = re.findall(r'\d+', post_num_info)[0]
+        if self.crawl_type == "photos":
+            num_info = re.search(r'\"media":{"count":\d+', self.driver.page_source).group()
+        elif self.crawl_type == "followers":
+            num_info = re.search(r'\"followed_by":{"count":\d+', self.driver.page_source).group()
 
-        post_num = ( 0 if not post_num else int(post_num) )
+        num = re.findall(r'\d+', num_info)[0]
+
+        print num
+
+        num = ( 0 if not num else int(num) )
 
         # number_to_download should be a string instance
         if number_to_download == "all":
-            return post_num
+            return num
         elif number_to_download.isdigit():
-            if int(number_to_download) > post_num:
-                return post_num
+            if int(number_to_download) > num:
+                return num
             else:
                 return int(number_to_download)
         else:
