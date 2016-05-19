@@ -10,6 +10,7 @@ import re
 import time
 import traceback
 from urlparse import urljoin
+import warnings
 
 from requests_futures.sessions import FuturesSession
 from selenium import webdriver
@@ -22,6 +23,8 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException
 """
     Selenium related
 """
+PRIVATE_MSG = 'This Account is Private'
+UNAVAILABLE_MSG = 'Sorry, this page isn\'t available'
 # Scroll downs script
 SCROLL_UP   = "window.scrollTo(0, 0);"
 SCROLL_DOWN = "window.scrollTo(0, document.body.scrollHeight);"
@@ -36,7 +39,9 @@ FOLLOWER_PATH = "//*[contains(text(), 'Followers')]"
 TIME_TO_CAPTION_PATH = "../../following-sibling::ul/*/*/span"
 
 """
+
     Define Expected Condition
+
 """
 class url_change(object):
     def __init__(self, prev_url):
@@ -44,7 +49,20 @@ class url_change(object):
     def __call__(self, driver):
         return self.prev_url != driver.current_url
 """
+
+    Self define exceptions
+
+"""
+
+class PrivatePageException(Exception):
+    pass
+class UnavailablePageException(Exception):
+    pass
+
+"""
+
     Instagram Crawler
+
 """
 class InstagramCrawler(object):
     def __init__(self,dir_prefix = './data/'):
@@ -71,6 +89,13 @@ class InstagramCrawler(object):
         self.captions = None
         self.userlist = None
 
+    def validate(self):
+        if not self.target.startswith('#'):
+            if PRIVATE_MSG in self.driver.page_source:
+                raise PrivatePageException("User '{}'\'s account is private!".format(self.target))
+        if UNAVAILABLE_MSG in self.driver.page_source:
+            raise UnavailablePageException("Your page '{}' is unavailable!".format(self.driver.current_url))
+
     def browse(self, target, crawl_type):
         """
             Scroll to the correct number of posts
@@ -90,6 +115,7 @@ class InstagramCrawler(object):
             self.url = urljoin(self.host,target)
 
         self.driver.get(self.url)
+        self.validate()
 
         return self
 
@@ -108,6 +134,8 @@ class InstagramCrawler(object):
                     "Number of photos and captions do not match!"
 
         elif self.crawl_type == "followers":
+            if caption:
+                warnings.warn("Caption flag has not effect since you are crawling followers")
             self.followerlist = self._crawl_followers()
             assert len(self.followerlist) == self.number,\
                 "Number of followers and number do not match!"
@@ -274,10 +302,11 @@ def main():
 
     try:
         crawler.browse(args.query,args.type).crawl(args.number,args.caption).save()
+        logging.info("Crawl {0} {1} succeeded!\n".format(args.type,args.query))
     except:
         err_msg = traceback.format_exc()
         print err_msg
-        logging.info("Crawl {0} {1} failed".format(args.type,args.query))
+        logging.info("Crawl {0} {1} failed:\n {2}".format(args.type,args.query, err_msg))
 
 if __name__ == "__main__":
     main()
