@@ -1,6 +1,3 @@
-"""
-    TODO: Check validity( Private | invalid usernames | weird hashtags )
-"""
 import argparse
 import codecs
 import logging
@@ -34,8 +31,10 @@ CSS_EXPLORE = "a[href='/explore/']"
 CSS_LOAD_MORE = "a._oidfu"
 CSS_RIGHT_ARROW = "a[class='_de018 coreSpriteRightPaginationArrow']"
 CSS_FOLLOWERS = "a[href='/{}/followers/']"
+CSS_FOLLOWING = "a[href='/{}/following/']"
 # XPATH
-FOLLOWER_PATH = "//*[contains(text(), 'Followers')]"
+FOLLOWER_PATH = "//div[contains(text(), 'Followers')]"
+FOLLOWING_PATH = "//div[contains(text(), 'Following')]"
 TIME_TO_CAPTION_PATH = "../../following-sibling::ul/*/*/span"
 
 """
@@ -87,7 +86,7 @@ class InstagramCrawler(object):
     def clear(self):
         self.photo_links = None
         self.captions = None
-        self.userlist = None
+        self.followlist = None
 
     def validate(self):
         if not self.target.startswith('#'):
@@ -103,7 +102,7 @@ class InstagramCrawler(object):
         self.clear()
 
         self.target = target
-        if not crawl_type in ['photos','followers']:
+        if not crawl_type in ['photos','followers','following']:
             raise Exception("Invalid crawl_type: {0}".format(crawl_type))
         self.crawl_type = crawl_type
 
@@ -121,7 +120,6 @@ class InstagramCrawler(object):
 
     def crawl(self,number=None,caption=False):
         self.number = self._set_num(number)
-        print self.number
 
         if self.crawl_type == "photos":
             self.photo_links = self._crawl_photo_links()
@@ -134,11 +132,11 @@ class InstagramCrawler(object):
                 assert len(self.photo_links) == len(self.captions),\
                     "Number of photos and captions do not match!"
 
-        elif self.crawl_type == "followers":
+        elif self.crawl_type in ["followers","following"]:
             if caption:
                 warnings.warn("Caption flag has not effect since you are crawling followers")
-            self.followerlist = self._crawl_followers()
-            assert len(self.followerlist) == self.number,\
+            self.followlist = self._crawl_follow()
+            assert len(self.followlist) == self.number,\
                 "Number of followers and number do not match!"
 
         return self
@@ -165,23 +163,22 @@ class InstagramCrawler(object):
                     with codecs.open(target_dir + cap,'w','utf-8') as f:
                         f.write(self.captions[idx])
 
-        elif self.crawl_type == "followers":
-            with open(target_dir + "followers{}.txt".format(self.number),'w') as f:
-                for follower in self.followerlist:
+        elif self.crawl_type in ["followers","following"]:
+            with open(target_dir + "{0}{1}.txt".format(self.crawl_type,self.number),'w') as f:
+                for follower in self.followlist:
                     f.write(follower + '\n')
 
         return self
 
     def _set_num(self, number_to_download):
-
-        if self.crawl_type == "photos":
-            num_info = re.search(r'\"media":{"count":\d+', self.driver.page_source).group()
+        if self.crawl_type == "photos": #"media": {"count": 3167
+            num_info = re.search(r'\"media": {"count": \d+', self.driver.page_source).group()
         elif self.crawl_type == "followers":
-            num_info = re.search(r'\"followed_by":{"count":\d+', self.driver.page_source).group()
+            num_info = re.search(r'\"follows": {"count": \d+', self.driver.page_source).group()
+        elif self.crawl_type == "following":
+            num_info = re.search(r'\"followed_by": {"count": \d+', self.driver.page_source).group()
 
         num = re.findall(r'\d+', num_info)[0]
-
-        print num
 
         num = ( 0 if not num else int(num) )
 
@@ -260,7 +257,8 @@ class InstagramCrawler(object):
             caption = ""
 
         return caption
-    def _crawl_followers(self):
+
+    def _crawl_follow(self):
         try:
             self.driver.find_element_by_css_selector(CSS_LOGIN)
             self.login()
@@ -268,25 +266,32 @@ class InstagramCrawler(object):
         except:
             logging.info("Already logged in!")
 
-        followers = WebDriverWait(self.driver, 10).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR,CSS_FOLLOWERS.format(self.target)))
+        if self.crawl_type == "followers":
+            FOLLOW_ELE = CSS_FOLLOWERS
+            FOLLOW_PATH = FOLLOWER_PATH
+        elif self.crawl_type == "following":
+            FOLLOW_ELE = CSS_FOLLOWING
+            FOLLOW_PATH = FOLLOWING_PATH
+
+        follow_ele = WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR,FOLLOW_ELE.format(self.target)))
         )
-        followers.click()
+        follow_ele.click()
         time.sleep(1)
-        Followers = self.driver.find_element_by_xpath(FOLLOWER_PATH)
-        List = Followers.find_element_by_xpath('..').find_element_by_tag_name('ul')
+        title = self.driver.find_element_by_xpath(FOLLOW_PATH)
+        List = title.find_element_by_xpath('..').find_element_by_tag_name('ul')
 
         List.click()
-        cur_follower_num = len(List.find_elements_by_xpath('*'))
+        cur_follow_num = len(List.find_elements_by_xpath('*'))
 
-        if self.number > cur_follower_num:
+        if self.number > cur_follow_num:
             element = List.find_elements_by_xpath('*')[-1]
 
             while len(List.find_elements_by_xpath('*')) < self.number:
                 element.send_keys(Keys.PAGE_DOWN)
 
-            cur_follower_num = len(List.find_elements_by_xpath('*'))
-            for _ in range(2*(self.number - cur_follower_num)/10):
+            cur_follow_num = len(List.find_elements_by_xpath('*'))
+            for _ in range(2*(self.number - cur_follow_num)/10):
                 element.send_keys(Keys.PAGE_DOWN)
 
         followers =  []
@@ -298,7 +303,7 @@ class InstagramCrawler(object):
 def main():
     parser = argparse.ArgumentParser(description='Instagram Crawler')
     parser.add_argument('-q','--query',type=str, help="target to crawl, add '#' for hashtags")
-    parser.add_argument('-t','--type',type=str, help = 'photos | followers')
+    parser.add_argument('-t','--type',type=str, help = 'photos | followers | followed')
     parser.add_argument('-n', '--number', default='12', help='Number of posts to download: integer or "all"')
     parser.add_argument('-c','--caption', action='store_true', help='Add this flag to download caption when downloading photos')
     parser.add_argument('-d', '--dir', type=str, default = './data/',
