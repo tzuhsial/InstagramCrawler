@@ -121,6 +121,8 @@ class InstagramCrawler(object):
     def crawl(self,number=None,caption=False):
         self.number = self._set_num(number)
 
+        print "Number to crawl {}".format(self.number)
+
         if self.crawl_type == "photos":
             self.photo_links = self._crawl_photo_links()
 
@@ -174,11 +176,13 @@ class InstagramCrawler(object):
         if self.crawl_type == "photos": #"media": {"count": 3167
             num_info = re.search(r'\"media": {"count": \d+', self.driver.page_source).group()
         elif self.crawl_type == "followers":
-            num_info = re.search(r'\"follows": {"count": \d+', self.driver.page_source).group()
-        elif self.crawl_type == "following":
             num_info = re.search(r'\"followed_by": {"count": \d+', self.driver.page_source).group()
+        elif self.crawl_type == "following":
+            num_info = re.search(r'\"follows": {"count": \d+', self.driver.page_source).group()
 
         num = re.findall(r'\d+', num_info)[0]
+
+        logging.debug("Found num {}".format(num))
 
         num = ( 0 if not num else int(num) )
 
