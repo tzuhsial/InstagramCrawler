@@ -6,17 +6,17 @@ Borrowed a lot from [InstaRaider](https://github.com/akurtovic/InstaRaider)
 
 Download the first 100 photos and captions(user's posts, if any) from username "instagram"
 ```
-  python instagramcrawler.py -q instagram -t photos -c -n 100
+  python instagramcrawler.py -q 'instagram' -t 'photos' -c -n 100
 ```
 
 Search for the hashtag "#breakfast" and download first 50 photos
 ```
-  python instagramcrawler.py -q #breakfast -t photos-n 50
+  python instagramcrawler.py -q '#breakfast' -t 'photos' -n 50
 ```
 
 Record the first 300 followers of the username "instagram", requires log in
 ```
-  python instagramcrawler.py -q instagram -t followers -n 300
+  python instagramcrawler.py -q 'instagram' -t 'followers' -n 300
 ```
 
 ### Full usage:
