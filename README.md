@@ -1,22 +1,21 @@
 # InstagramCrawler
----
-A non API python program to crawl public photos, posts or followers <br/>
-Borrowed a lot from [InstaRaider](https://github.com/akurtovic/InstaRaider)
-##### Example:
+A non API python program to crawl public photos, posts or followers.  
+Borrowed a lot from [InstaRaider](https://github.com/akurtovic/InstaRaider).
+### Example:
 
 Download the first 100 photos and captions(user's posts, if any) from username "instagram"
 ```
-  python instagramcrawler.py -q 'instagram' -t 'photos' -c -n 100
+$ python instagramcrawler.py -q 'instagram' -t 'photos' -c -n 100
 ```
 
 Search for the hashtag "#breakfast" and download first 50 photos
 ```
-  python instagramcrawler.py -q '#breakfast' -t 'photos' -n 50
+$ python instagramcrawler.py -q '#breakfast' -t 'photos' -n 50
 ```
 
 Record the first 300 followers of the username "instagram", requires log in
 ```
-  python instagramcrawler.py -q 'instagram' -t 'followers' -n 300
+$ python instagramcrawler.py -q 'instagram' -t 'followers' -n 300
 ```
 
 ### Full usage:
@@ -33,5 +32,5 @@ Record the first 300 followers of the username "instagram", requires log in
 
   There are 2 packages : selenium & requests-futures
 ```
-  pip install -r requirements.txt
+$ pip install -r requirements.txt
 ```
