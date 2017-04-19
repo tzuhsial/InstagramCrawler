@@ -174,11 +174,13 @@ class InstagramCrawler(object):
 
     def _set_num(self, number_to_download):
         if self.crawl_type == "photos": #"media": {"count": 3167
-            num_info = re.search(r'\"media": {"count": \d+', self.driver.page_source).group()
+            num_info = re.search(r'\], "count": \d+', self.driver.page_source).group()
         elif self.crawl_type == "followers":
             num_info = re.search(r'\"followed_by": {"count": \d+', self.driver.page_source).group()
         elif self.crawl_type == "following":
             num_info = re.search(r'\"follows": {"count": \d+', self.driver.page_source).group()
+
+        import pdb; pdb.set_trace()
 
         num = re.findall(r'\d+', num_info)[0]
 
