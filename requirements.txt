@@ -1,5 +1,4 @@
-futures==3.0.5
-requests==2.10.0
+futures==3.1.1
+requests==2.13.0
 requests-futures==0.9.7
-selenium==2.53.2
-wheel==0.26.0
+selenium==3.3.3
