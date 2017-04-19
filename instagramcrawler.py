@@ -180,8 +180,6 @@ class InstagramCrawler(object):
         elif self.crawl_type == "following":
             num_info = re.search(r'\"follows": {"count": \d+', self.driver.page_source).group()
 
-        import pdb; pdb.set_trace()
-
         num = re.findall(r'\d+', num_info)[0]
 
         logging.debug("Found num {}".format(num))
