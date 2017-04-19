@@ -28,7 +28,7 @@ SCROLL_DOWN = "window.scrollTo(0, document.body.scrollHeight);"
 # Elements
 CSS_LOGIN = "a[href='/accounts/login/']"
 CSS_EXPLORE = "a[href='/explore/']"
-CSS_LOAD_MORE = "a._oidfu"
+CSS_LOAD_MORE = "a._8imhp._glz1g"
 CSS_RIGHT_ARROW = "a[class='_de018 coreSpriteRightPaginationArrow']"
 CSS_FOLLOWERS = "a[href='/{}/followers/']"
 CSS_FOLLOWING = "a[href='/{}/following/']"
