@@ -28,30 +28,36 @@ class InstagramCrawler(object):
 
         self.data = {}
 
-    def __del__(self):
-        self._driver.quit()
-
-    def crawl(self, query, crawl_type, number, caption, dir_prefix):
-        print("Query: {}, type: {}, number: {}, caption: {}".format(query,crawl_type, number, caption))
+    def crawl(self, query, number, caption, dir_prefix):
+        print("Query: {}, number: {}, caption: {}".format(query, number, caption))
 
         # Browse url
-        self.browse_target_page(query, crawl_type)
+        self.browse_target_page(query)
 
         # Scroll down until target Number photos is reached
-        self.scroll_until_target_number(number)
+        self.scroll_to_num_of_posts(number)
 
         # Start crawling
-        self.scrape_photo_links(number)
+        self.scrape_photo_links(number, is_hashtag=query.startswith("#"))
 
         # Save to directory
         self.download_and_save(dir_prefix,query)
-        import pdb; pdb.set_trace()
 
-    def browse_target_page(self, query, crawl_type):
-        target_url = urljoin(HOST,query)
+        # Quit driver
+        self._driver.quit()
+
+    def browse_target_page(self, query):
+        # Browse Hashtags
+        if query.startswith('#'):
+            relative_url = urljoin('explore/tags/',query.strip('#'))
+        else: # Browse user page
+            relative_url = query
+
+        target_url = urljoin(HOST,relative_url)
+
         self._driver.get(target_url)
 
-    def scroll_until_target_number(self, number):
+    def scroll_to_num_of_posts(self, number):
         # Get total number of posts of page
         num_info = re.search(r'\], "count": \d+', self._driver.page_source).group()
         num_of_posts = int(re.findall(r'\d+', num_info)[0])
@@ -72,7 +78,7 @@ class InstagramCrawler(object):
             self._driver.execute_script(SCROLL_UP)
             time.sleep(0.1)
 
-    def scrape_photo_links(self, number):
+    def scrape_photo_links(self, number, is_hashtag = False):
 
         encased_photo_links = re.finditer(r'src="([https]+:...[\/\w \.-]*..[\/\w \.-]*'
                                           r'..[\/\w \.-]*..[\/\w \.-].jpg)', self._driver.page_source)
@@ -81,17 +87,21 @@ class InstagramCrawler(object):
 
         print("Number of photo_links: {}".format(len(photo_links)))
 
-        self.data['photo_links'] = photo_links[:number]
+        begin = 0 if is_hashtag else 1
+
+        self.data['photo_links'] = photo_links[begin:number+begin]
 
     def download_and_save(self, dir_prefix, query):
+        # Check if is hashtag
+        dir_name = query.lstrip('#') + '.hashtag' if query.startswith('#') else query
 
-        dir_path = os.path.join(dir_prefix,query)
+        dir_path = os.path.join(dir_prefix,dir_name)
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
 
         for idx, photo_link in enumerate(self.data['photo_links'],0):
+            sys.stdout.write("\033[F")
             print("Downloading {} image...".format(idx+1))
-            #sys.stdout.write("\033[F")
 
             # Send image request
             res = requests.get(photo_link)
@@ -107,20 +117,18 @@ def main():
     # Arguments #
     parser = argparse.ArgumentParser(description='Instagram Crawler')
     parser.add_argument('-q', '--query', type=str, default='instagram', help="target to crawl, add '#' for hashtags")
-    parser.add_argument('-t', '--crawl_type', type=str, default='photos', help='photos | followers | following')
     parser.add_argument('-n', '--number', type=int, default=12, help='Number of posts to download: integer or "all"')
     parser.add_argument('-c', '--caption', action='store_true', help='Add this flag to download caption when downloading photos')
     parser.add_argument('-d', '--dir_prefix', type=str, default='./data/', help='directory to save results')
     args = parser.parse_args()
 
     query = args.query
-    crawl_type = args.crawl_type
     number = args.number
     dir_prefix = args.dir_prefix
     caption = args.caption
 
     crawler = InstagramCrawler()
-    crawler.crawl(query=query, crawl_type=crawl_type, number=number, caption=caption, dir_prefix=dir_prefix)
+    crawler.crawl(query=query, number=number, caption=caption, dir_prefix=dir_prefix)
 
 if __name__ == "__main__":
     main()
