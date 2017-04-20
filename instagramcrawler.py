@@ -1,3 +1,5 @@
+from __future__ import division
+
 import argparse
 import codecs
 from collections import defaultdict
@@ -5,7 +7,12 @@ import os
 import re
 import sys
 import time
-from urlparse import urljoin
+try:
+    from urlparse import urljoin
+    from urllib import urlretrieve
+except ImportError:
+    from urllib.parse import urljoin
+    from urllib.request import urlretrieve
 
 import requests
 import selenium
@@ -36,6 +43,7 @@ class url_change(object):
     def __call__(self, driver):
         return self.prev_url != driver.current_url
 
+
 class InstagramCrawler(object):
     def __init__(self):
         self._driver = webdriver.Firefox()
@@ -43,7 +51,8 @@ class InstagramCrawler(object):
         self.data = defaultdict(list)
 
     def crawl(self, query, number, caption, dir_prefix):
-        print("Query: {}, number: {}, caption: {}, dir_prefix: {}".format(query, number, caption, dir_prefix))
+        print("Query: {}, number: {}, caption: {}, dir_prefix: {}".format(
+            query, number, caption, dir_prefix))
 
         # Browse url
         self.browse_target_page(query)
@@ -63,8 +72,6 @@ class InstagramCrawler(object):
 
         # Quit driver
         self._driver.quit()
-
-
 
     def browse_target_page(self, query):
         # Browse Hashtags
@@ -92,7 +99,7 @@ class InstagramCrawler(object):
         )
         loadmore.click()
 
-        num_to_scroll = (number - 12) / 12 + 1
+        num_to_scroll = int((number - 12) / 12) + 1
         for _ in range(num_to_scroll):
             self._driver.execute_script(SCROLL_DOWN)
             time.sleep(0.1)
@@ -120,7 +127,8 @@ class InstagramCrawler(object):
             if post_num == 0:  # Click on the first post
                 # Chrome
                 # self._driver.find_element_by_class_name('_ovg3g').click()
-                self._driver.find_element_by_xpath(FIREFOX_FIRST_POST_PATH).click()
+                self._driver.find_element_by_xpath(
+                    FIREFOX_FIRST_POST_PATH).click()
 
                 if number != 1:  #
 
@@ -133,21 +141,24 @@ class InstagramCrawler(object):
             elif number != 1:  # Click Right Arrow to move to next post
                 url_before = self._driver.current_url
 
-                self._driver.find_element_by_css_selector(CSS_RIGHT_ARROW).click()
+                self._driver.find_element_by_css_selector(
+                    CSS_RIGHT_ARROW).click()
 
                 # Wait until the page has loaded
                 try:
-                    WebDriverWait(self._driver, 5).until( url_change(url_before) )
+                    WebDriverWait(self._driver, 5).until(
+                        url_change(url_before))
                 except TimeoutException:
                     print("Time out in caption scraping at number {}".format(post_num))
-                    break;
+                    break
 
             # Parse caption
             try:
                 time_element = WebDriverWait(self._driver, 5).until(
                     EC.presence_of_element_located((By.TAG_NAME, "time"))
                 )
-                caption = time_element.find_element_by_xpath(TIME_TO_CAPTION_PATH).text
+                caption = time_element.find_element_by_xpath(
+                    TIME_TO_CAPTION_PATH).text
             except NoSuchElementException:  # Forbidden
                 caption = ""
 
@@ -169,25 +180,21 @@ class InstagramCrawler(object):
         for idx, photo_link in enumerate(self.data['photo_links'], 0):
             sys.stdout.write("\033[F")
             print("Downloading {} image...".format(idx + 1))
-
-            # Send image request
-            res = requests.get(photo_link)
-
             # Filename
             _, ext = os.path.splitext(photo_link)
             filename = str(idx) + ext
-            filepath = os.path.join(dir_path,filename)
+            filepath = os.path.join(dir_path, filename)
 
-            with open(filepath, 'w') as fout:
-                fout.write(res.content)
+            # Send image request
+            urlretrieve(photo_link, filepath)
 
         # Save Captions
-        for idx, caption in enumerate(self.data['captions'],0):
+        for idx, caption in enumerate(self.data['captions'], 0):
 
             filename = str(idx) + '.txt'
-            filepath = os.path.join(dir_path,filename)
+            filepath = os.path.join(dir_path, filename)
 
-            with codecs.open(filepath, 'w',encoding='utf-8') as fout:
+            with codecs.open(filepath, 'w', encoding='utf-8') as fout:
                 fout.write(caption + '\n')
 
 

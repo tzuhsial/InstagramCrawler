@@ -1,3 +1,5 @@
+Feel free to open a Github issue if you have any problems running the code
+---
 # InstagramCrawler
 A non API python program to crawl public photos, posts
 
@@ -6,6 +8,7 @@ Download the first 100 photos and captions(user's posts, if any) from username "
 ```
 $ python instagramcrawler.py -q 'instagram' -t 'photos' -c -n 100
 ```
+NOTE: When I ran on public account 'instagram', somehow it stops at caption 29
 
 Search for the hashtag "#breakfast" and download first 50 photos
 ```
