@@ -12,14 +12,14 @@ NOTE: When I ran on public account 'instagram', somehow it stops at caption 29
 
 Search for the hashtag "#breakfast" and download first 50 photos
 ```
-$ python instagramcrawler.py -q '#breakfast' -t 'photos' -n 50
+$ python instagramcrawler.py -q '#breakfast' -n 50
 ```
 ### Full usage:
 ```
-  usage: instagramcrawler.py [-h] [-q QUERY] [-t TYPE] [-n NUMBER] [-c] [-d DIR]
+  usage: instagramcrawler.py [-h] [-q QUERY] [-n NUMBER] [-c] [-d DIR]
 ```
   - [-q QUERY] : username, add '#' to search for hashtags, e.g. 'username', '#hashtag'
-  - [-c]: add this flag to download captions(what user wrote to describe their photos) if TYPE is 'photos'
+  - [-c]: add this flag to download captions(what user wrote to describe their photos)
   - [-n NUMBER]: number of posts, followers, or following to crawl,  
   - [-d DIR]: the directory to save crawling results, default is './data/[query]'
 
