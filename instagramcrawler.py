@@ -18,9 +18,10 @@ import requests
 import selenium
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
 # HOST
 HOST = 'http://www.instagram.com'
@@ -31,9 +32,19 @@ CSS_RIGHT_ARROW = "a[class='_de018 coreSpriteRightPaginationArrow']"
 FIREFOX_FIRST_POST_PATH = "//a[contains(@class, '_8mlbc _vbtk2 _t5r8b')]"
 TIME_TO_CAPTION_PATH = "../../following-sibling::ul/*/*/span"
 
+# FOLLOWERS/FOLLOWING RELATED
+CSS_EXPLORE = "a[href='/explore/']"
+CSS_LOGIN = "a[href='/accounts/login/']"
+CSS_FOLLOWERS = "a[href='/{}/followers/']"
+CSS_FOLLOWING = "a[href='/{}/following/']"
+FOLLOWER_PATH = "//div[contains(text(), 'Followers')]"
+FOLLOWING_PATH = "//div[contains(text(), 'Following')]"
+
 # JAVASCRIPT COMMANDS
 SCROLL_UP = "window.scrollTo(0, 0);"
 SCROLL_DOWN = "window.scrollTo(0, document.body.scrollHeight);"
+
+# For Caption Scraping
 
 
 class url_change(object):
@@ -43,6 +54,8 @@ class url_change(object):
     def __call__(self, driver):
         return self.prev_url != driver.current_url
 
+# Crawler Class
+
 
 class InstagramCrawler(object):
     def __init__(self):
@@ -50,27 +63,48 @@ class InstagramCrawler(object):
 
         self.data = defaultdict(list)
 
-    def crawl(self, query, number, caption, dir_prefix):
-        print("Query: {}, number: {}, caption: {}, dir_prefix: {}".format(
-            query, number, caption, dir_prefix))
+    def login(self):
+        self._driver.get(urljoin(HOST, "accounts/login/"))
+        print("")
+        WebDriverWait(self._driver, 60).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, CSS_EXPLORE))
+        )
 
-        # Browse url
-        self.browse_target_page(query)
+    def quit(self):
+        self._driver.quit()
 
-        # Scroll down until target Number photos is reached
-        self.scroll_to_num_of_posts(number)
+    def crawl(self, dir_prefix, query, crawl_type, number, caption):
+        print("dir_prefix: {}, query: {}, crawl_type: {}, number: {}, caption: {}"
+              .format(dir_prefix, query, crawl_type, number, caption))
 
-        # Start crawling
-        self.scrape_photo_links(number, is_hashtag=query.startswith("#"))
+        if crawl_type == "photos":
+            # Browse target page
+            self.browse_target_page(query)
+            # Scroll down until target number photos is reached
+            self.scroll_to_num_of_posts(number)
+            # Scrape photo links
+            self.scrape_photo_links(number, is_hashtag=query.startswith("#"))
+            # Scrape captions if specified
+            if caption is True:
+                self.click_and_scrape_captions(number)
 
-        # Scrape Captions if Specified
-        if caption:
-            self.click_and_scrape_captions(number)
+        elif crawl_type in ["followers", "following"]:
+            # Need to login first before crawling followers/following
+            print("You will need to login to crawl {}".format(crawl_type))
+            self.login()
+            # Then browse target page
+            assert not query.startswith(
+                '#'), "Hashtag does not have followers/following!"
+            self.browse_target_page(query)
+            # Scrape captions
+            self.scrape_followers_or_following(crawl_type, query, number)
 
         # Save to directory
-        self.download_and_save(dir_prefix, query, caption)
+        print("Saving...")
+        self.download_and_save(dir_prefix, query, crawl_type)
 
         # Quit driver
+        print("Quitting driver...")
         self._driver.quit()
 
     def browse_target_page(self, query):
@@ -107,7 +141,7 @@ class InstagramCrawler(object):
             time.sleep(0.1)
 
     def scrape_photo_links(self, number, is_hashtag=False):
-
+        print("Scraping photo links...")
         encased_photo_links = re.finditer(r'src="([https]+:...[\/\w \.-]*..[\/\w \.-]*'
                                           r'..[\/\w \.-]*..[\/\w \.-].jpg)', self._driver.page_source)
 
@@ -120,7 +154,7 @@ class InstagramCrawler(object):
         self.data['photo_links'] = photo_links[begin:number + begin]
 
     def click_and_scrape_captions(self, number):
-
+        print("Scraping captions...")
         captions = []
 
         for post_num in range(number):
@@ -131,7 +165,6 @@ class InstagramCrawler(object):
                     FIREFOX_FIRST_POST_PATH).click()
 
                 if number != 1:  #
-
                     WebDriverWait(self._driver, 5).until(
                         EC.presence_of_element_located(
                             (By.CSS_SELECTOR, CSS_RIGHT_ARROW)
@@ -166,7 +199,44 @@ class InstagramCrawler(object):
 
         self.data['captions'] = captions
 
-    def download_and_save(self, dir_prefix, query, caption):
+    def scrape_followers_or_following(self, crawl_type, query, number):
+        print("Scraping {}...".format(crawl_type))
+        if crawl_type == "followers":
+            FOLLOW_ELE = CSS_FOLLOWERS
+            FOLLOW_PATH = FOLLOWER_PATH
+        elif crawl_type == "following":
+            FOLLOW_ELE = CSS_FOLLOWING
+            FOLLOW_PATH = FOLLOWING_PATH
+
+        # Locate Crawl Type
+        follow_ele = WebDriverWait(self._driver, 5).until(
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, FOLLOW_ELE.format(query)))
+        )
+        follow_ele.click()
+        time.sleep(1)
+        title = self._driver.find_element_by_xpath(FOLLOW_PATH)
+        List = title.find_element_by_xpath('..').find_element_by_tag_name('ul')
+        List.click()
+
+        # Loop through list till target number is reached
+        num_of_shown_follow = len(List.find_elements_by_xpath('*'))
+
+        while len(List.find_elements_by_xpath('*')) < number:
+            element = List.find_elements_by_xpath('*')[-1]
+            # Work around for now => should use selenium's Expected Conditions!
+            try:
+                element.send_keys(Keys.PAGE_DOWN)
+            except Exception as e:
+                time.sleep(0.1)
+
+        follow_items = []
+        for ele in List.find_elements_by_xpath('*')[:number]:
+            follow_items.append(ele.text.split('\n')[0])
+
+        self.data[crawl_type] = follow_items
+
+    def download_and_save(self, dir_prefix, query, crawl_type):
         # Check if is hashtag
         dir_name = query.lstrip(
             '#') + '.hashtag' if query.startswith('#') else query
@@ -175,7 +245,8 @@ class InstagramCrawler(object):
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
 
-        print()
+        print("Saving to directory...{}".format(dir_path))
+
         # Save Photos
         for idx, photo_link in enumerate(self.data['photo_links'], 0):
             sys.stdout.write("\033[F")
@@ -184,7 +255,6 @@ class InstagramCrawler(object):
             _, ext = os.path.splitext(photo_link)
             filename = str(idx) + ext
             filepath = os.path.join(dir_path, filename)
-
             # Send image request
             urlretrieve(photo_link, filepath)
 
@@ -197,28 +267,34 @@ class InstagramCrawler(object):
             with codecs.open(filepath, 'w', encoding='utf-8') as fout:
                 fout.write(caption + '\n')
 
+        # Save followers/following
+        filename = crawl_type + '.txt'
+        filepath = os.path.join(dir_path, filename)
+        if len(self.data[crawl_type]):
+            with codecs.open(filepath, 'w', encoding='utf-8') as fout:
+                for fol in self.data[crawl_type]:
+                    fout.write(fol + '\n')
+
 
 def main():
-    # Arguments #
+    #   Arguments  #
     parser = argparse.ArgumentParser(description='Instagram Crawler')
+    parser.add_argument('-d', '--dir_prefix', type=str,
+                        default='./data/', help='directory to save results')
     parser.add_argument('-q', '--query', type=str, default='instagram',
                         help="target to crawl, add '#' for hashtags")
+    parser.add_argument('-t', '--crawl_type', type=str,
+                        default='photos', help="Options: 'photos' | 'followers' | 'following'")
     parser.add_argument('-n', '--number', type=int, default=12,
                         help='Number of posts to download: integer or "all"')
     parser.add_argument('-c', '--caption', action='store_true',
                         help='Add this flag to download caption when downloading photos')
-    parser.add_argument('-d', '--dir_prefix', type=str,
-                        default='./data/', help='directory to save results')
     args = parser.parse_args()
-
-    query = args.query
-    number = args.number
-    dir_prefix = args.dir_prefix
-    caption = args.caption
+    #  End Argparse #
 
     crawler = InstagramCrawler()
-    crawler.crawl(query=query, number=number,
-                  caption=caption, dir_prefix=dir_prefix)
+    crawler.crawl(dir_prefix=args.dir_prefix, query=args.query, crawl_type=args.crawl_type, number=args.number,
+                  caption=args.caption)
 
 
 if __name__ == "__main__":
