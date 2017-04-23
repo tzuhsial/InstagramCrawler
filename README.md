@@ -14,17 +14,27 @@ Search for the hashtag "#breakfast" and download first 50 photos
 ```
 $ python instagramcrawler.py -q '#breakfast' -n 50
 ```
+
+Record the first 30 followers of the username "instagram", requires log in
+```
+$ python instagramcrawler.py -q 'instagram' -t 'followers' -n 30
+```
+
 ### Full usage:
 ```
   usage: instagramcrawler.py [-h] [-q QUERY] [-n NUMBER] [-c] [-d DIR]
 ```
+  - [-d DIR]: the directory to save crawling results, default is './data/[query]'
   - [-q QUERY] : username, add '#' to search for hashtags, e.g. 'username', '#hashtag'
+  - [-t CRAWL_TYPE]: crawl_type, Options: 'photos | followers | following'
   - [-c]: add this flag to download captions(what user wrote to describe their photos)
   - [-n NUMBER]: number of posts, followers, or following to crawl,  
-  - [-d DIR]: the directory to save crawling results, default is './data/[query]'
+
 
 ### Installation
   There are 2 packages : selenium & requests
+
 ```
 $ pip install -r requirements.txt
 ```
+NOTE: selenium >= 3.4, Firefox geckodriver >= 0.16
