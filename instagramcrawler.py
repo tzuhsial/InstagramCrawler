@@ -45,8 +45,6 @@ SCROLL_UP = "window.scrollTo(0, 0);"
 SCROLL_DOWN = "window.scrollTo(0, document.body.scrollHeight);"
 
 # For Caption Scraping
-
-
 class url_change(object):
     def __init__(self, prev_url):
         self.prev_url = prev_url
@@ -55,8 +53,6 @@ class url_change(object):
         return self.prev_url != driver.current_url
 
 # Crawler Class
-
-
 class InstagramCrawler(object):
     def __init__(self):
         self._driver = webdriver.Firefox()
@@ -105,7 +101,7 @@ class InstagramCrawler(object):
 
         # Quit driver
         print("Quitting driver...")
-        self._driver.quit()
+        self.quit()
 
     def browse_target_page(self, query):
         # Browse Hashtags
