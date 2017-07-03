@@ -204,15 +204,18 @@ class InstagramCrawler(object):
             FOLLOW_ELE = CSS_FOLLOWING
             FOLLOW_PATH = FOLLOWING_PATH
 
-        # Locate Crawl Type
+        # Locate follow list
         follow_ele = WebDriverWait(self._driver, 5).until(
             EC.presence_of_element_located(
                 (By.CSS_SELECTOR, FOLLOW_ELE.format(query)))
         )
         follow_ele.click()
-        time.sleep(1)
-        title = self._driver.find_element_by_xpath(FOLLOW_PATH)
-        List = title.find_element_by_xpath('..').find_element_by_tag_name('ul')
+
+        title_ele = WebDriverWait(self._driver, 5).until(
+            EC.presence_of_element_located(
+                (By.XPATH, FOLLOW_PATH))
+        )
+        List = title_ele.find_element_by_xpath('..').find_element_by_tag_name('ul')
         List.click()
 
         # Loop through list till target number is reached
@@ -241,7 +244,7 @@ class InstagramCrawler(object):
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
 
-        print("Saving to directory...{}".format(dir_path))
+        print("Saving to directory: {}".format(dir_path))
 
         # Save Photos
         for idx, photo_link in enumerate(self.data['photo_links'], 0):
