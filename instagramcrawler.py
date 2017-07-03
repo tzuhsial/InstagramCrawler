@@ -3,6 +3,7 @@ from __future__ import division
 import argparse
 import codecs
 from collections import defaultdict
+import json
 import os
 import re
 import sys
@@ -45,6 +46,8 @@ SCROLL_UP = "window.scrollTo(0, 0);"
 SCROLL_DOWN = "window.scrollTo(0, document.body.scrollHeight);"
 
 # For Caption Scraping
+
+
 class url_change(object):
     def __init__(self, prev_url):
         self.prev_url = prev_url
@@ -53,14 +56,40 @@ class url_change(object):
         return self.prev_url != driver.current_url
 
 # Crawler Class
+
+
 class InstagramCrawler(object):
     def __init__(self):
         self._driver = webdriver.Firefox()
 
         self.data = defaultdict(list)
 
-    def login(self):
+    def login(self, authentication=None):
+        """
+            authentication: path to authentication json file
+        """
         self._driver.get(urljoin(HOST, "accounts/login/"))
+
+        if authentication:
+            print("Username and password loaded from {}".format(authentication))
+            with open(authentication, 'r') as fin:
+                auth_dict = json.loads(fin.read())
+            # Input username
+            username_input = WebDriverWait(self._driver, 5).until(
+                EC.presence_of_element_located((By.NAME, 'username'))
+            )
+            username_input.send_keys(auth_dict['username'])
+            # Input password
+            password_input = WebDriverWait(self._driver, 5).until(
+                EC.presence_of_element_located((By.NAME, 'password'))
+            )
+            password_input.send_keys(auth_dict['password'])
+            # Submit
+            password_input.submit()
+        else:
+            print("Type your username and password by hand to login!")
+            print("You have a minute to do so!")
+
         print("")
         WebDriverWait(self._driver, 60).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, CSS_EXPLORE))
@@ -69,9 +98,9 @@ class InstagramCrawler(object):
     def quit(self):
         self._driver.quit()
 
-    def crawl(self, dir_prefix, query, crawl_type, number, caption):
-        print("dir_prefix: {}, query: {}, crawl_type: {}, number: {}, caption: {}"
-              .format(dir_prefix, query, crawl_type, number, caption))
+    def crawl(self, dir_prefix, query, crawl_type, number, caption, authentication):
+        print("dir_prefix: {}, query: {}, crawl_type: {}, number: {}, caption: {}, authentication: {}"
+              .format(dir_prefix, query, crawl_type, number, caption, authentication))
 
         if crawl_type == "photos":
             # Browse target page
@@ -87,7 +116,8 @@ class InstagramCrawler(object):
         elif crawl_type in ["followers", "following"]:
             # Need to login first before crawling followers/following
             print("You will need to login to crawl {}".format(crawl_type))
-            self.login()
+            self.login(authentication)
+
             # Then browse target page
             assert not query.startswith(
                 '#'), "Hashtag does not have followers/following!"
@@ -215,7 +245,8 @@ class InstagramCrawler(object):
             EC.presence_of_element_located(
                 (By.XPATH, FOLLOW_PATH))
         )
-        List = title_ele.find_element_by_xpath('..').find_element_by_tag_name('ul')
+        List = title_ele.find_element_by_xpath(
+            '..').find_element_by_tag_name('ul')
         List.click()
 
         # Loop through list till target number is reached
@@ -285,15 +316,21 @@ def main():
     parser.add_argument('-t', '--crawl_type', type=str,
                         default='photos', help="Options: 'photos' | 'followers' | 'following'")
     parser.add_argument('-n', '--number', type=int, default=12,
-                        help='Number of posts to download: integer or "all"')
+                        help='Number of posts to download: integer')
     parser.add_argument('-c', '--caption', action='store_true',
                         help='Add this flag to download caption when downloading photos')
+    parser.add_argument('-a', '--authentication', type=str, default=None,
+                        help='path to authentication json file')
     args = parser.parse_args()
     #  End Argparse #
 
     crawler = InstagramCrawler()
-    crawler.crawl(dir_prefix=args.dir_prefix, query=args.query, crawl_type=args.crawl_type, number=args.number,
-                  caption=args.caption)
+    crawler.crawl(dir_prefix=args.dir_prefix,
+                  query=args.query,
+                  crawl_type=args.crawl_type,
+                  number=args.number,
+                  caption=args.caption,
+                  authentication=args.authentication)
 
 
 if __name__ == "__main__":
