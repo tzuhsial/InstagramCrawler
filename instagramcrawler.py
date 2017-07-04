@@ -187,7 +187,6 @@ class InstagramCrawler(object):
             if post_num == 0:  # Click on the first post
                 # Chrome
                 # self._driver.find_element_by_class_name('_ovg3g').click()
-                import pdb; pdb.set_trace()
                 self._driver.find_element_by_xpath(
                     FIREFOX_FIRST_POST_PATH).click()
 
@@ -200,7 +199,6 @@ class InstagramCrawler(object):
 
             elif number != 1:  # Click Right Arrow to move to next post
                 url_before = self._driver.current_url
-
                 self._driver.find_element_by_css_selector(
                     CSS_RIGHT_ARROW).click()
 
