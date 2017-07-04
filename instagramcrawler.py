@@ -30,7 +30,7 @@ HOST = 'http://www.instagram.com'
 # SELENIUM CSS SELECTOR
 CSS_LOAD_MORE = "a._8imhp._glz1g"
 CSS_RIGHT_ARROW = "a[class='_de018 coreSpriteRightPaginationArrow']"
-FIREFOX_FIRST_POST_PATH = "//a[contains(@class, '_8mlbc _vbtk2 _t5r8b')]"
+FIREFOX_FIRST_POST_PATH = "//div[contains(@class, '_8mlbc _vbtk2 _t5r8b')]"
 TIME_TO_CAPTION_PATH = "../../following-sibling::ul/*/*/span"
 
 # FOLLOWERS/FOLLOWING RELATED
@@ -45,20 +45,20 @@ FOLLOWING_PATH = "//div[contains(text(), 'Following')]"
 SCROLL_UP = "window.scrollTo(0, 0);"
 SCROLL_DOWN = "window.scrollTo(0, document.body.scrollHeight);"
 
-# For Caption Scraping
-
-
 class url_change(object):
+    """
+        Used for caption scraping
+    """
     def __init__(self, prev_url):
         self.prev_url = prev_url
 
     def __call__(self, driver):
         return self.prev_url != driver.current_url
 
-# Crawler Class
-
-
 class InstagramCrawler(object):
+    """
+        Crawler class
+    """
     def __init__(self):
         self._driver = webdriver.Firefox()
 
@@ -162,9 +162,9 @@ class InstagramCrawler(object):
         num_to_scroll = int((number - 12) / 12) + 1
         for _ in range(num_to_scroll):
             self._driver.execute_script(SCROLL_DOWN)
-            time.sleep(0.1)
+            time.sleep(0.2)
             self._driver.execute_script(SCROLL_UP)
-            time.sleep(0.1)
+            time.sleep(0.2)
 
     def scrape_photo_links(self, number, is_hashtag=False):
         print("Scraping photo links...")
@@ -187,6 +187,7 @@ class InstagramCrawler(object):
             if post_num == 0:  # Click on the first post
                 # Chrome
                 # self._driver.find_element_by_class_name('_ovg3g').click()
+                import pdb; pdb.set_trace()
                 self._driver.find_element_by_xpath(
                     FIREFOX_FIRST_POST_PATH).click()
 
