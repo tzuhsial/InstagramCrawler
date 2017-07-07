@@ -31,7 +31,7 @@ HOST = 'http://www.instagram.com'
 CSS_LOAD_MORE = "a._8imhp._glz1g"
 CSS_RIGHT_ARROW = "a[class='_de018 coreSpriteRightPaginationArrow']"
 FIREFOX_FIRST_POST_PATH = "//div[contains(@class, '_8mlbc _vbtk2 _t5r8b')]"
-TIME_TO_CAPTION_PATH = "../../following-sibling::ul/*/*/span"
+TIME_TO_CAPTION_PATH = "../../../div/ul/li/span"
 
 # FOLLOWERS/FOLLOWING RELATED
 CSS_EXPLORE = "a[href='/explore/']"
@@ -124,7 +124,10 @@ class InstagramCrawler(object):
             self.browse_target_page(query)
             # Scrape captions
             self.scrape_followers_or_following(crawl_type, query, number)
-
+        else:
+            print("Unknown crawl type: {}".format(crawl_type))
+            self.quit()
+            return
         # Save to directory
         print("Saving...")
         self.download_and_save(dir_prefix, query, crawl_type)
@@ -184,6 +187,8 @@ class InstagramCrawler(object):
         captions = []
 
         for post_num in range(number):
+            sys.stdout.write("\033[F")
+            print("Scraping captions {} / {}".format(post_num+1,number))
             if post_num == 0:  # Click on the first post
                 # Chrome
                 # self._driver.find_element_by_class_name('_ovg3g').click()
@@ -279,7 +284,7 @@ class InstagramCrawler(object):
         # Save Photos
         for idx, photo_link in enumerate(self.data['photo_links'], 0):
             sys.stdout.write("\033[F")
-            print("Downloading {} image...".format(idx + 1))
+            print("Downloading {} images to ".format(idx + 1))
             # Filename
             _, ext = os.path.splitext(photo_link)
             filename = str(idx) + ext
