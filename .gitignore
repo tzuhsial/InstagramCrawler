@@ -1,2 +1,5 @@
 # Default data directory
 data
+
+# prevent terrible mistakes
+auth.json
