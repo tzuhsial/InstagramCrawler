@@ -59,8 +59,12 @@ class InstagramCrawler(object):
     """
         Crawler class
     """
-    def __init__(self):
-        self._driver = webdriver.Firefox()
+    def __init__(self, headless=0):
+        if(headless == 1):
+            print("headless mode on")
+            self._driver = webdriver.PhantomJS()
+        else:
+            self._driver = webdriver.Firefox()
 
         self.data = defaultdict(list)
 
@@ -323,12 +327,14 @@ def main():
                         help='Number of posts to download: integer')
     parser.add_argument('-c', '--caption', action='store_true',
                         help='Add this flag to download caption when downloading photos')
+    parser.add_argument('-l', '--headless', type=int, default=0,
+                        help='If set, will use PhantomJS driver to run script as headless')
     parser.add_argument('-a', '--authentication', type=str, default=None,
                         help='path to authentication json file')
     args = parser.parse_args()
     #  End Argparse #
 
-    crawler = InstagramCrawler()
+    crawler = InstagramCrawler(headless=args.headless)
     crawler.crawl(dir_prefix=args.dir_prefix,
                   query=args.query,
                   crawl_type=args.crawl_type,
