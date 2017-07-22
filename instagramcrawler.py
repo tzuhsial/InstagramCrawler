@@ -257,6 +257,11 @@ class InstagramCrawler(object):
             '..').find_element_by_tag_name('ul')
         List.click()
 
+        # when no number defined, check the total items
+        if number is 0:
+            number = int(filter(str.isdigit, str(follow_ele.text)))
+            print("getting all " + str(number) + " items")
+
         # Loop through list till target number is reached
         num_of_shown_follow = len(List.find_elements_by_xpath('*'))
 
@@ -323,7 +328,7 @@ def main():
                         help="target to crawl, add '#' for hashtags")
     parser.add_argument('-t', '--crawl_type', type=str,
                         default='photos', help="Options: 'photos' | 'followers' | 'following'")
-    parser.add_argument('-n', '--number', type=int, default=12,
+    parser.add_argument('-n', '--number', type=int, default=0,
                         help='Number of posts to download: integer')
     parser.add_argument('-c', '--caption', action='store_true',
                         help='Add this flag to download caption when downloading photos')
