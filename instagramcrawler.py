@@ -66,6 +66,7 @@ class InstagramCrawler(object):
         else:
             self._driver = webdriver.Firefox()
 
+        self._driver.implicitly_wait(10)
         self.data = defaultdict(list)
 
     def login(self, authentication=None):
@@ -247,6 +248,13 @@ class InstagramCrawler(object):
             EC.presence_of_element_located(
                 (By.CSS_SELECTOR, FOLLOW_ELE.format(query)))
         )
+
+        # when no number defined, check the total items
+        if number is 0:
+            number = int(filter(str.isdigit, str(follow_ele.text)))
+            print("getting all " + str(number) + " items")
+
+        # open desired list
         follow_ele.click()
 
         title_ele = WebDriverWait(self._driver, 5).until(
@@ -257,14 +265,8 @@ class InstagramCrawler(object):
             '..').find_element_by_tag_name('ul')
         List.click()
 
-        # when no number defined, check the total items
-        if number is 0:
-            number = int(filter(str.isdigit, str(follow_ele.text)))
-            print("getting all " + str(number) + " items")
-
         # Loop through list till target number is reached
         num_of_shown_follow = len(List.find_elements_by_xpath('*'))
-
         while len(List.find_elements_by_xpath('*')) < number:
             element = List.find_elements_by_xpath('*')[-1]
             # Work around for now => should use selenium's Expected Conditions!
