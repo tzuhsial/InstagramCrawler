@@ -4,5 +4,6 @@ data
 # prevent terrible mistakes
 auth.json
 
-# driver log
+# driver logs
 geckodriver.log
+ghostdriver.log
