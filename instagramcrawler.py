@@ -59,8 +59,8 @@ class InstagramCrawler(object):
     """
         Crawler class
     """
-    def __init__(self, headless=0):
-        if(headless == 1):
+    def __init__(self, headless=True):
+        if headless:
             print("headless mode on")
             self._driver = webdriver.PhantomJS()
         else:
@@ -334,7 +334,7 @@ def main():
                         help='Number of posts to download: integer')
     parser.add_argument('-c', '--caption', action='store_true',
                         help='Add this flag to download caption when downloading photos')
-    parser.add_argument('-l', '--headless', type=int, default=0,
+    parser.add_argument('-l', '--headless', action='store_true',
                         help='If set, will use PhantomJS driver to run script as headless')
     parser.add_argument('-a', '--authentication', type=str, default=None,
                         help='path to authentication json file')
