@@ -34,6 +34,7 @@ usage: instagramcrawler.py [-h] [-d DIR] [-q QUERY] [-t CRAWL_TYPE] [-n NUMBER] 
   - [-n NUMBER]: number of posts, followers, or following to crawl
   - [-c]: add this flag to download captions(what user wrote to describe their photos)
   - [-a AUTHENTICATION]: path to a json file, which contains your instagram credentials, please see 'auth.json'
+  - [-l HEADLESS]: If set, will use PhantomJS driver to run script as headless
 
 
 ### Installation

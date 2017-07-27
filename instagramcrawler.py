@@ -59,9 +59,14 @@ class InstagramCrawler(object):
     """
         Crawler class
     """
-    def __init__(self):
-        self._driver = webdriver.Firefox()
+    def __init__(self, headless=True):
+        if headless:
+            print("headless mode on")
+            self._driver = webdriver.PhantomJS()
+        else:
+            self._driver = webdriver.Firefox()
 
+        self._driver.implicitly_wait(10)
         self.data = defaultdict(list)
 
     def login(self, authentication=None):
@@ -244,6 +249,13 @@ class InstagramCrawler(object):
             EC.presence_of_element_located(
                 (By.CSS_SELECTOR, FOLLOW_ELE.format(query)))
         )
+
+        # when no number defined, check the total items
+        if number is 0:
+            number = int(filter(str.isdigit, str(follow_ele.text)))
+            print("getting all " + str(number) + " items")
+
+        # open desired list
         follow_ele.click()
 
         title_ele = WebDriverWait(self._driver, 5).until(
@@ -256,7 +268,6 @@ class InstagramCrawler(object):
 
         # Loop through list till target number is reached
         num_of_shown_follow = len(List.find_elements_by_xpath('*'))
-
         while len(List.find_elements_by_xpath('*')) < number:
             element = List.find_elements_by_xpath('*')[-1]
             # Work around for now => should use selenium's Expected Conditions!
@@ -320,16 +331,18 @@ def main():
                         help="target to crawl, add '#' for hashtags")
     parser.add_argument('-t', '--crawl_type', type=str,
                         default='photos', help="Options: 'photos' | 'followers' | 'following'")
-    parser.add_argument('-n', '--number', type=int, default=12,
+    parser.add_argument('-n', '--number', type=int, default=0,
                         help='Number of posts to download: integer')
     parser.add_argument('-c', '--caption', action='store_true',
                         help='Add this flag to download caption when downloading photos')
+    parser.add_argument('-l', '--headless', action='store_true',
+                        help='If set, will use PhantomJS driver to run script as headless')
     parser.add_argument('-a', '--authentication', type=str, default=None,
                         help='path to authentication json file')
     args = parser.parse_args()
     #  End Argparse #
 
-    crawler = InstagramCrawler()
+    crawler = InstagramCrawler(headless=args.headless)
     crawler.crawl(dir_prefix=args.dir_prefix,
                   query=args.query,
                   crawl_type=args.crawl_type,
