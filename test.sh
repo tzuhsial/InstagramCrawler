@@ -1,7 +1,5 @@
-echo "Check photos & captions..."
-echo "Download first 10 photos and captions of account 'instagram'"
+echo "Query account 'instagram', download 20 photos and their captions"
 python instagramcrawler.py -q 'instagram' -n 20 -c
 
-echo "Check hashtag..."
-echo "Search for hashtag '#breakfast' and download 20 photos"
+echo "Query hashtag '#breakfast' and download 20 photos"
 python instagramcrawler.py -q '#breakfast' -n 20

@@ -209,7 +209,7 @@ class InstagramCrawler(object):
 
                 # Wait until the page has loaded
                 try:
-                    WebDriverWait(self._driver, 5).until(
+                    WebDriverWait(self._driver, 10).until(
                         url_change(url_before))
                 except TimeoutException:
                     print("Time out in caption scraping at number {}".format(post_num))
@@ -217,12 +217,13 @@ class InstagramCrawler(object):
 
             # Parse caption
             try:
-                time_element = WebDriverWait(self._driver, 5).until(
+                time_element = WebDriverWait(self._driver, 10).until(
                     EC.presence_of_element_located((By.TAG_NAME, "time"))
                 )
                 caption = time_element.find_element_by_xpath(
                     TIME_TO_CAPTION_PATH).text
             except NoSuchElementException:  # Forbidden
+                print("Caption not found in the {} photo".format(post_num))
                 caption = ""
 
             captions.append(caption)
