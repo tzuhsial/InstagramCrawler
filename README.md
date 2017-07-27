@@ -8,6 +8,9 @@ To crawl followers or followings, you will need to login with your credentials e
 
 Well, it is to copy 'auth.json.example' to 'auth.json' and fill in your username and password
 
+##### PhantomJS for headless browser
+For headless browser, after installing [phantomjs](http://phantomjs.org/), add '-l' to the arguments
+
 ### Examples:
 Download the first 100 photos and captions(user's posts, if any) from username "instagram"
 
