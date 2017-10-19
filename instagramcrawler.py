@@ -18,6 +18,7 @@ except ImportError:
 import requests
 import selenium
 from selenium import webdriver
+from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
@@ -59,12 +60,14 @@ class InstagramCrawler(object):
     """
         Crawler class
     """
-    def __init__(self, headless=True):
+    def __init__(self, headless=True, firefox_path=None):
         if headless:
             print("headless mode on")
             self._driver = webdriver.PhantomJS()
         else:
-            self._driver = webdriver.Firefox()
+            # credit to https://github.com/SeleniumHQ/selenium/issues/3884#issuecomment-296990844
+            binary = FirefoxBinary(firefox_path)
+            self._driver = webdriver.Firefox(firefox_binary=binary)
 
         self._driver.implicitly_wait(10)
         self.data = defaultdict(list)
@@ -339,10 +342,12 @@ def main():
                         help='If set, will use PhantomJS driver to run script as headless')
     parser.add_argument('-a', '--authentication', type=str, default=None,
                         help='path to authentication json file')
+    parser.add_argument('-f', '--firefox_path', type=str, default=None,
+                        help='path to Firefox installation')
     args = parser.parse_args()
     #  End Argparse #
 
-    crawler = InstagramCrawler(headless=args.headless)
+    crawler = InstagramCrawler(headless=args.headless, firefox_path=args.firefox_path)
     crawler.crawl(dir_prefix=args.dir_prefix,
                   query=args.query,
                   crawl_type=args.crawl_type,
