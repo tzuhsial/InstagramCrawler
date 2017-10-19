@@ -28,7 +28,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 HOST = 'http://www.instagram.com'
 
 # SELENIUM CSS SELECTOR
-CSS_LOAD_MORE = "a._8imhp._glz1g"
+CSS_LOAD_MORE = "a._1cr2e._epyes"
 CSS_RIGHT_ARROW = "a[class='_de018 coreSpriteRightPaginationArrow']"
 FIREFOX_FIRST_POST_PATH = "//div[contains(@class, '_8mlbc _vbtk2 _t5r8b')]"
 TIME_TO_CAPTION_PATH = "../../../div/ul/li/span"
