@@ -48,3 +48,11 @@ There are 2 packages : selenium & requests
 ```
 $ pip install -r requirements.txt
 ```
+
+###### Optional: geckodriver and phantomjs if not present on your system
+```
+bash utils/get_gecko.sh
+bash utils/get_phantomjs.sh
+source utils/set_path.sh
+```
+
