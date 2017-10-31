@@ -38,6 +38,7 @@ usage: instagramcrawler.py [-h] [-d DIR] [-q QUERY] [-t CRAWL_TYPE] [-n NUMBER] 
   - [-c]: add this flag to download captions(what user wrote to describe their photos)
   - [-a AUTHENTICATION]: path to a json file, which contains your instagram credentials, please see 'auth.json'
   - [-l HEADLESS]: If set, will use PhantomJS driver to run script as headless
+  - [-f FIREFOX_PATH]: path to the **binary** (not the script) of firefox on your system (see this issue in Selenium https://github.com/SeleniumHQ/selenium/issues/3884#issuecomment-296988595)
 
 
 ### Installation
@@ -47,3 +48,11 @@ There are 2 packages : selenium & requests
 ```
 $ pip install -r requirements.txt
 ```
+
+###### Optional: geckodriver and phantomjs if not present on your system
+```
+bash utils/get_gecko.sh
+bash utils/get_phantomjs.sh
+source utils/set_path.sh
+```
+
