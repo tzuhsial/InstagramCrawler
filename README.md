@@ -1,4 +1,7 @@
-Feel free to open a Github issue if you have any problems running the code
+# 05/03/2019 Repo is now archived. 
+
+I am now officially archiving this repo after a long time of, well, not maintaining.
+
 ---
 # InstagramCrawler
 A non API python program to crawl public photos, posts, followers, and following
